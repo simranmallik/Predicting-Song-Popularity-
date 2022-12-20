@@ -1,0 +1,244 @@
+---
+title: "Final proj"
+author: "Simran Mallik"
+date: "2022-12-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caTools)
+library(mgcv)
+library(dplyr)
+library(glmnet)
+library(MASS)
+library(naivebayes)
+library(gam)
+library(randomForest)
+library(e1071)
+library(caTools)
+library(class)
+library(kernlab)
+library(data.table)
+library(ggplot2)
+library(splines)
+library(glmnet)
+library(gam)
+library(mgcv)
+library(mgcv)
+library(leaps)
+
+
+```
+
+```{r}
+data <- read.csv("training_score_new.csv")
+data_filtered <- data %>% dplyr::select(valence, danceability, energy, key, mode, loudness, speechiness, acousticness, instrumentalness, liveness, tempo, duration_ms, time_signature, score)
+data_filtered$score <- round(data_filtered$score,2)
+
+#make this example reproducible
+set.seed(1)
+
+#use 70% of dataset as training set and 30% as test set
+sample <- sample(c(TRUE, FALSE), nrow(data), replace=TRUE, prob=c(0.7,0.3))
+train  <- data_filtered[sample, ]
+test   <- data_filtered[!sample, ]
+
+
+# testingdata <- read.csv("testing_score.csv")
+# testingdata_filtered <- testingdata %>% dplyr::select(valence, danceability, energy, key, mode, loudness, acousticness, instrumentalness, liveness, tempo, duration_ms, time_signature)
+# testingdata$score <- round(testingdata$score,2)
+
+```
+
+```{r}
+# train
+# test
+
+# write.csv(train, "C:\\Users\\simranmallik_1\\Desktop\\train.csv")
+# write.csv(test, "C:\\Users\\simranmallik_1\\Desktop\\test.csv")
+
+```
+
+# Linear
+```{r}
+set.seed(1)
+linear <- lm(score~.,data = train)
+lmpreds <- predict(linear, newdata=test)
+
+mean((lmpreds - test$score)^2)
+
+
+summary(regsubsets(score~.,data = train, method = "forward", nvmax = 12))
+
+
+
+```
+```{r}
+set.seed(1)
+# Linear model 1
+linear_1 <- lm(score~speechiness,data = train)
+lmpreds_1 <- predict(linear_1, newdata=test)
+mean((lmpreds_1 - test$score)^2)
+
+
+# Linear model 2
+linear_2 <- lm(score~speechiness + tempo,data = data_filtered)
+lmpreds_2 <- predict(linear_2, newdata=test)
+mean((lmpreds_2 - test$score)^2)
+
+
+# Linear model 3
+linear_3 <- lm(score~speechiness + liveness + tempo,data = data_filtered)
+lmpreds_3 <- predict(linear_3, newdata=test)
+mean((lmpreds_3 - test$score)^2)
+
+
+# Linear model 4
+linear_4 <- lm(score~valence + speechiness + liveness + tempo,data = data_filtered)
+lmpreds_4 <- predict(linear_4, newdata=test)
+mean((lmpreds_4 - test$score)^2)
+
+
+# Linear model 5
+linear_5 <- lm(score~valence + danceability + speechiness + liveness + tempo,data = data_filtered)
+lmpreds_5 <- predict(linear_5, newdata=test)
+mean((lmpreds_5 - test$score)^2)
+
+
+# Linear model 6
+linear_6 <- lm(score~valence + danceability + instrumentalness + speechiness + liveness + tempo,data = data_filtered)
+lmpreds_6 <- predict(linear_6, newdata=test)
+mean((lmpreds_6 - test$score)^2)
+
+
+# Linear model 7
+linear_7 <- lm(score ~ valence + danceability + key + speechiness + instrumentalness + liveness + tempo,data = data_filtered)
+lmpreds_7 <- predict(linear_6, newdata=test)
+mean((lmpreds_7 - test$score)^2)
+
+# Linear model 8
+linear_8 <- lm(score ~ valence + danceability + key + mode + speechiness + instrumentalness + liveness + tempo,data = data_filtered)
+lmpreds_8 <- predict(linear_8, newdata=test)
+mean((lmpreds_8 - test$score)^2)
+
+# Linear model 9
+linear_9 <- lm(score ~ valence + danceability + key + mode + loudness + speechiness + instrumentalness + liveness + tempo,data = data_filtered)
+lmpreds_9 <- predict(linear_9, newdata=test)
+mean((lmpreds_9 - test$score)^2)
+
+# Linear model 10
+linear_10 <- lm(score ~ valence + danceability + key + mode + loudness + speechiness + instrumentalness + liveness + tempo + duration_ms,data = data_filtered)
+lmpreds_10 <- predict(linear_10, newdata=test)
+mean((lmpreds_10 - test$score)^2)
+
+# Linear model 11
+# 11. Valence, danceability, key, mode, loudness, speechiness, acousticness, instrumentalness, liveness, tempo, duration_ms
+linear_11 <- lm(score ~ valence + danceability + key + mode + loudness + speechiness + acousticness + instrumentalness + liveness + tempo + duration_ms,data = data_filtered)
+lmpreds_11 <- predict(linear_11, newdata=test)
+mean((lmpreds_11 - test$score)^2)
+
+# Linear model 12
+linear_12 <- lm(score ~ valence + danceability + key + mode + loudness + speechiness + acousticness + instrumentalness + liveness + tempo + duration_ms + time_signature,data = data_filtered)
+lmpreds_12 <- predict(linear_12, newdata=test)
+mean((lmpreds_12 - test$score)^2)
+
+```
+
+
+# GAM 
+```{r}
+set.seed(1)
+# Stepwise forward selection for GAM model
+
+Gam.object <- gam(score~valence+danceability+energy+key+mode+loudness+speechiness+acousticness+instrumentalness+liveness+tempo+duration_ms+time_signature, data=train)
+step.object <- step.Gam(Gam.object, scope=list("valence"=~1+ valence + s(valence),"danceability"=~1+ danceability + s(danceability), 
+                                               "energy"=~1+ energy + s(energy), "key"=~1+ key + s(key), 
+                                               "loudness"=~1+ loudness + s(loudness), 
+                                               "speechiness"=~1+ speechiness + s(speechiness),
+                                               "acousticness"=~1+ acousticness + s(acousticness), 
+                                               "instrumentalness"=~1+ instrumentalness + s(instrumentalness), 
+                                               "liveness"=~1+ liveness + s(liveness), 
+                                               "tempo"=~1+ tempo + s(tempo), 
+                                               "duration_ms"=~1+ duration_ms + s(duration_ms), 
+                                               "time_signature"=~1+ time_signature + s(time_signature)))
+
+
+
+test_n <- test %>% dplyr::select(valence, danceability, energy, key, mode, loudness, speechiness, acousticness, instrumentalness, liveness, tempo, duration_ms, time_signature)
+
+
+best_gam = gam(score ~ mode + s(danceability) + s(liveness), data = train)
+gam_preds <- predict(best_gam, newdata = test_n)
+gam_mse <- mean((gam_preds - test$score)^2)
+gam_mse
+
+```
+
+
+
+
+# LASSO  
+```{r}
+set.seed(1)
+# Model 1
+
+# LASSO
+x <- data.matrix(train[,c('valence', 'danceability', 'energy', 'mode', 'key', 'loudness', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'tempo', 'duration_ms', 'time_signature')])
+y <- train$score
+#perform k-fold cross-validation to find optimal lambda value
+cv_model <- cv.glmnet(x, y, alpha = 1)
+#find optimal lambda value that minimizes test MSE
+best_lambda <- cv_model$lambda.min
+best_model <- glmnet(x, y, alpha = 1, lambda = best_lambda)
+
+coef(best_model)
+
+
+
+lasso_preds<- predict(best_model, s = best_lambda, newx = as.matrix(test_n))
+
+
+mean((lasso_preds - test$score)^2)
+```
+
+# Ridge
+```{r}
+set.seed(1)
+
+cv_model <- cv.glmnet(as.matrix(train %>% dplyr::select(valence, danceability, energy, key, mode, loudness, speechiness, acousticness, instrumentalness, liveness, tempo, duration_ms, time_signature)), train$score, alpha = 0)
+
+best_lambda <- cv_model$lambda.min
+
+best_model <- glmnet(as.matrix(train %>% dplyr::select(valence, danceability, energy, key, mode, loudness, speechiness, acousticness, instrumentalness, liveness, tempo, duration_ms, time_signature)), train$score, alpha = 0, lambda = best_lambda)
+
+
+ridge_preds<- predict(best_model, s = best_lambda, newx = as.matrix(test_n))
+
+mean((ridge_preds - test$score)^2)
+
+
+```
+
+
+
+# KNN
+```{r}
+set.seed(1)
+train_no_score <- train %>% dplyr::select(valence, danceability, energy, key, mode, loudness, speechiness, acousticness, instrumentalness, liveness, tempo, duration_ms, time_signature)
+
+
+knn_model <- knn(train = train_no_score,
+                      test = test_n,
+                      cl = train$score,
+                      k = 3)
+
+
+knn_model <- as.numeric(as.character(knn_model))
+
+mean((knn_model - test$score)^2)
+
+
+
+
+```
