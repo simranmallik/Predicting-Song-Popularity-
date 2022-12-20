@@ -109,7 +109,8 @@ Random Forest - We hypertuned our random forest in three ways. Because our datas
 
 Our lowest MSE we encountered was 36.8, but this was with a two variable model. We opted for a 6 variable model with an MSE of 37.1 for our final model.
 We think the model performed well based on the MSE’s and also our general knowledge - for example, “Blinding Lights” ranked very high in our model. This song also was very popular and broke multiple records. From our general knowledge, the song rankings made sense.
-Challenges and Further Work
+
+## Challenges and Further Work
 
 Though there are many Spotify datasets, there were few that had streaming data, which we needed to create a good popularity score heuristic. For the future, we could pull data on our own to get the number of streams so that we could have more data to work with.
 
