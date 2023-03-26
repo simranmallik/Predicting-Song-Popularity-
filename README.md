@@ -41,7 +41,8 @@ Then, we joined this dataset with data from the Spotify API. The features from t
 5. mode
 6. speechiness
 7. acousticness
-8. instrumentalness 9. liveness
+8. instrumentalness 
+9. liveness
 10. valence
 11. tempo
 12. id
